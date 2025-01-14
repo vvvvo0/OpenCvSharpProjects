@@ -40,7 +40,7 @@ namespace OpenCvSharpProjects
             }
 
 
-            frame.Dispose();
+            frame.Dispose(); 
             video.Release();
             Cv2.DestroyAllWindows();
         }
