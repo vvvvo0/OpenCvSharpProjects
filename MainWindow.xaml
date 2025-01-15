@@ -8,6 +8,6 @@
         Title="MainWindow" Height="450" Width="800">
     
     <Grid>
-        <TextBlock x:Name="txtCounter" />
+        <Image x:Name="imgCamera" Stretch="Uniform" />
     </Grid>
 </Window>
