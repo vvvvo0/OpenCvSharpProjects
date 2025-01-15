@@ -1,48 +1,31 @@
-﻿using System.Windows;
+﻿
+using System.Windows;
+
 using System.Windows.Threading;
 
-using OpenCvSharp;
-// OpenCV4의 데이터 형식이나 함수 및 메서드를 사용하기 위해 네임스페이스에 using OpenCvSharp;을 추가합니다.
-// Mat 클래스 또한 using OpenCvSharp;에 포함되어 있습니다.
 
 namespace OpenCvSharpProjects
-{
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : System.Windows.Window
+{ 
+    public partial class MainWindow : Window
     {
-        
-        private VideoCapture video;
-        private Mat frame;
+        private DispatcherTimer timer;
+        private int count = 0;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            VideoCapture video = new VideoCapture(0);
-            Mat frame = new Mat();
-
-            Loaded += MainWindow_Loaded;
+            // DispatcherTimer 객체 생성 및 설정
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1); // 1초 간격
+            timer.Tick += Timer_Tick; // Tick 이벤트 핸들러 등록
+            timer.Start(); // 타이머 시작
         }
 
-
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void Timer_Tick(object? sender, EventArgs e)
         {
-            //  프레임을 읽어오고 표시하는 작업을 반복
-            while (Cv2.WaitKey(1) != 'q') // 1밀리초 동안 키 입력 대기
-            {
-                video.Read(frame);
-                if (!frame.Empty())
-                {
-                    Cv2.ImShow("MainWindow", frame); // OpenCV 창에 이미지 표시
-                }
-            }
-
-
-            frame.Dispose(); 
-            video.Release();
-            Cv2.DestroyAllWindows();
+            // 텍스트 블록의 내용을 업데이트하는 UI 작업
+            txtCounter.Text = $"현재 카운트: {count++}";
         }
     }
 }
