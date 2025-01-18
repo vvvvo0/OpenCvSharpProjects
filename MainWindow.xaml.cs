@@ -21,10 +21,6 @@ namespace OpenCvSharpProjects
         private Mat frame; // Mat 객체를 저장할 필드, OpenCV에서 이미지를 표현하는 데 사용된다
         
         
-        /* 
-        private DispatcherTimer timer; // DispatcherTimer 객체를 저장할 필드, UI 스레드에서 작업을 예약하는 데 사용된다 
-        */
-
         public MainWindow() // 생성자
         {
             InitializeComponent(); // 윈도우를 초기화한다. XAML에서 정의된 컨트롤들을 초기화하고 이벤트 핸들러를 연결하는 등의 작업을 수행한다
@@ -32,13 +28,6 @@ namespace OpenCvSharpProjects
             capture = new VideoCapture(0); // VideoCapture 객체를 생성하고 기본 웹캠 장치(0)를 사용하도록 설정한다
             frame = new Mat(); // Mat 객체를 생성한다
 
-
-            /*
-            timer = new DispatcherTimer(); // DispatcherTimer 객체를 생성한다
-            timer.Interval = TimeSpan.FromMilliseconds(33); // 타이머 간격을 33밀리초로 설정한다. 약 30fps(초당 프레임 수)로 프레임을 업데이트한다
-            timer.Tick += UpdateFrame; // timer의 Tick 이벤트에 UpdateFrame 메서드를 연결한다. 즉, 타이머가 발생할 때마다 UpdateFrame 메서드가 호출된다
-            timer.Start(); // 타이머를 시작한다
-            */
 
 
             // CompositionTarget.Rendering 이벤트를 사용하여 프레임 업데이트
@@ -52,9 +41,7 @@ namespace OpenCvSharpProjects
 
             if (!frame.Empty()) // frame 객체가 비어 있지 않으면(프레임을 읽어오는 데 성공하면), 다음 코드를 실행한다
             {
-                /*
-                Cv2.ImShow("Camera Output", frame); // Cv2.ImShow() 메서드를 사용하여 frame 객체(이미지)를 "Camera Output" 창(OpenCV 창)에 표시한다
-                */
+             
 
                 // 이미지 처리 및 객체 인식 수행
                 ProcessImage(frame); 
@@ -75,8 +62,62 @@ namespace OpenCvSharpProjects
         {
             // TODO: 게임 화면 영역 검출, 특정 객체 인식, 행동 결정 등의 로직 구현
 
-            // 예시: 이미지에 빨간색 사각형 그리기
-            Cv2.Rectangle(image, new Rect(100, 100, 200, 100), Scalar.Red, 2);
+            // 템플릿 이미지 파일 경로
+            // string[] templatePaths = { "top_left.png", "top_right.png", "bottom_left.png", "bottom_right.png" };
+            string[] templatePaths = { "top_left.png", "bottom_right.png" };
+
+            // 각 템플릿 이미지에 대한 매칭 결과를 저장할 리스트
+            List<Point> matchPoints = new List<Point>();
+
+
+
+            // 각 템플릿 이미지에 대해 템플릿 매칭 수행
+            foreach (string templatePath in templatePaths)
+            {
+                // 템플릿 이미지 로드
+                Mat template = Cv2.ImRead(templatePath, ImreadModes.Grayscale);
+
+                // 템플릿 매칭 결과를 저장할 Mat 객체 생성
+                Mat result = new Mat();
+
+
+                // MatchTemplate () 함수를 사용하여 템플릿 매칭 수행
+                Cv2.MatchTemplate(image, template, result, TemplateMatchModes.CCoeffNormed);
+
+                // 매칭 결과에서 최댓값과 그 위치를 찾음
+                double minVal, maxVal;
+                Point minLoc, maxLoc;
+                Cv2.MinMaxLoc(result, out minVal, out maxVal, out minLoc, out maxLoc);
+
+
+                // 최댓값이 임계값보다 크면 객체를 찾은 것으로 판단
+                if (maxVal > 0.8) // 임계값은 적절히 조정합니다.
+                {
+                    // 템플릿의 크기를 고려하여 객체의 중심 좌표 계산
+                    Point center = new Point(maxLoc.X + template.Width / 2, maxLoc.Y + template.Height / 2);
+                    matchPoints.Add(center);
+                }
+            }
+
+
+            // 매칭 결과를 이용하여 게임 화면 영역 검출
+            if (matchPoints.Count == 2) // 두 개의 꼭짓점을 모두 찾은 경우
+            {
+                
+                // 꼭짓점 좌표를 찾습니다.
+                Point topLeft = matchPoints[0]; // 왼쪽 상단
+                Point bottomRight = matchPoints[1]; // 오른쪽 하단
+
+                // 게임 화면 영역 계산
+                int x = (int)topLeft.X;
+                int y = (int)topLeft.Y;
+                int width = (int)(bottomRight.X - topLeft.X);
+                int height = (int)(bottomRight.Y - topLeft.Y);
+                Rect gameWindowRect = new Rect(x, y, width, height);
+
+                // 게임 화면 영역에 사각형 그리기
+                Cv2.Rectangle(image, gameWindowRect, Scalar.Red, 2);
+            }
         }
 
 
@@ -88,10 +129,6 @@ namespace OpenCvSharpProjects
             capture.Release(); // VideoCapture 객체를 해제하여 웹캠 장치를 닫는다
             frame.Dispose(); // Mat 객체를 해제하여 이미지 데이터가 차지하는 메모리를 해제한다
             Cv2.DestroyAllWindows(); // 모든 OpenCV 창을 닫는다
-            
-            /*
-            timer.Stop(); // 타이머를 중지한다
-            */
         }
         
     }
