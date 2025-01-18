@@ -8,6 +8,6 @@
         Title="MainWindow" Height="450" Width="800">
     
     <Grid>
-        <Image x:Name="imgCamera" Stretch="Uniform" />
+        <Image x:Name="CameraImage" />
     </Grid>
 </Window>
