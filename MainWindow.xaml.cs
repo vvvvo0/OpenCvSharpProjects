@@ -94,6 +94,19 @@ namespace OpenCvSharpProjects
                     }
 
 
+                    // 템플릿 이미지 크기 확인
+                    if (template.Width == 0 || template.Height == 0)
+                    {
+                        Console.WriteLine($"템플릿 이미지 크기 오류: {templatePath}");
+                        continue; // 다음 템플릿 이미지로 넘어갑니다.
+                    }
+
+                    // 이미지 타입 확인
+                    if (image.Type() != template.Type())
+                    {
+                        Console.WriteLine($"이미지 타입 불일치: 입력 이미지 - {image.Type()}, 템플릿 이미지 - {template.Type()}");
+                        Cv2.CvtColor(image, image, ColorConversionCodes.BGR2GRAY); // 입력 이미지를 그레이스케일로 변환
+                    }
 
 
 
