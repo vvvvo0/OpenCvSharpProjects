@@ -8,6 +8,7 @@ using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
+using System.IO;
 
 
 namespace OpenCvSharpProjects
@@ -34,14 +35,17 @@ namespace OpenCvSharpProjects
             CompositionTarget.Rendering += UpdateFrame; 
         }
 
-        private void UpdateFrame(object? sender, EventArgs e) // 타이머 이벤트가 발생할 때마다 호출되는 메서드이다
+        private async void UpdateFrame(object? sender, EventArgs e) // 타이머 이벤트가 발생할 때마다 호출되는 메서드이다
         {
             capture.Read(frame); // 웹캠에서 현재 프레임을 읽어와, frame 객체에 저장한다
 
 
             if (!frame.Empty()) // frame 객체가 비어 있지 않으면(프레임을 읽어오는 데 성공하면), 다음 코드를 실행한다
             {
-             
+
+                // 이미지 처리 및 객체 인식을 비동기적으로 수행
+                await Task.Run(() => ProcessImage(frame.Clone()));
+
 
                 // 이미지 처리 및 객체 인식 수행
                 ProcessImage(frame); 
@@ -62,61 +66,108 @@ namespace OpenCvSharpProjects
         {
             // TODO: 게임 화면 영역 검출, 특정 객체 인식, 행동 결정 등의 로직 구현
 
-            // 템플릿 이미지 파일 경로
-            // string[] templatePaths = { "top_left.png", "top_right.png", "bottom_left.png", "bottom_right.png" };
-            string[] templatePaths = { "top_left.png", "bottom_right.png" };
 
-            // 각 템플릿 이미지에 대한 매칭 결과를 저장할 리스트
-            List<Point> matchPoints = new List<Point>();
+           
+                // 템플릿 이미지 파일 경로
+                // string[] templatePaths = { "top_left.png", "top_right.png", "bottom_left.png", "bottom_right.png" };
+                string[] templatePaths = { "top_left.png", "bottom_right.png" };
+
+                // 각 템플릿 이미지에 대한 매칭 결과를 저장할 리스트
+                List<Point> matchPoints = new List<Point>();
 
 
-
-            // 각 템플릿 이미지에 대해 템플릿 매칭 수행
-            foreach (string templatePath in templatePaths)
+            try
             {
-                // 템플릿 이미지 로드
-                Mat template = Cv2.ImRead(templatePath, ImreadModes.Grayscale);
-
-                // 템플릿 매칭 결과를 저장할 Mat 객체 생성
-                Mat result = new Mat();
-
-
-                // MatchTemplate () 함수를 사용하여 템플릿 매칭 수행
-                Cv2.MatchTemplate(image, template, result, TemplateMatchModes.CCoeffNormed);
-
-                // 매칭 결과에서 최댓값과 그 위치를 찾음
-                double minVal, maxVal;
-                Point minLoc, maxLoc;
-                Cv2.MinMaxLoc(result, out minVal, out maxVal, out minLoc, out maxLoc);
-
-
-                // 최댓값이 임계값보다 크면 객체를 찾은 것으로 판단
-                if (maxVal > 0.8) // 임계값은 적절히 조정합니다.
+                // 각 템플릿 이미지에 대해 템플릿 매칭 수행
+                foreach (string templatePath in templatePaths)
                 {
-                    // 템플릿의 크기를 고려하여 객체의 중심 좌표 계산
-                    Point center = new Point(maxLoc.X + template.Width / 2, maxLoc.Y + template.Height / 2);
-                    matchPoints.Add(center);
+                    // 템플릿 이미지 로드
+                    Mat template = Cv2.ImRead(templatePath, ImreadModes.Grayscale);
+
+
+
+                    // 템플릿 이미지 로드 확인
+                    if (template.Empty())
+                    {
+                        Console.WriteLine($"템플릿 이미지 로드 실패: {templatePath}");
+                        continue; // 다음 템플릿 이미지로 넘어갑니다.
+                    }
+
+
+
+
+
+                    // 템플릿 이미지가 입력 이미지보다 큰 경우 크기 조정
+                    if (template.Width > image.Width || template.Height > image.Height)
+                    {
+                        Cv2.Resize(template, template, new OpenCvSharp.Size(image.Width / 2, image.Height / 2));
+                    }
+
+
+                  
+
+                    // 템플릿 매칭 결과를 저장할 Mat 객체 생성
+                    Mat result = new Mat();
+
+
+                    // MatchTemplate () 함수를 사용하여 템플릿 매칭 수행
+                    Cv2.MatchTemplate(image, template, result, TemplateMatchModes.CCoeffNormed);
+
+                    // 매칭 결과에서 최댓값과 그 위치를 찾음
+                    double minVal, maxVal;
+                    Point minLoc, maxLoc;
+                    Cv2.MinMaxLoc(result, out minVal, out maxVal, out minLoc, out maxLoc);
+
+
+                    // 최댓값이 임계값보다 크면 객체를 찾은 것으로 판단
+                    if (maxVal > 0.8) // 임계값은 적절히 조정합니다.
+                    {
+                        // 템플릿의 크기를 고려하여 객체의 중심 좌표 계산
+                        Point center = new Point(maxLoc.X + template.Width / 2, maxLoc.Y + template.Height / 2);
+                        matchPoints.Add(center);
+                    }
                 }
+
+           
+                // 매칭 결과를 이용하여 게임 화면 영역 검출
+                if (matchPoints.Count == 2) // 두 개의 꼭짓점을 모두 찾은 경우
+                {
+
+                    // 꼭짓점 좌표를 찾습니다.
+                    Point topLeft = matchPoints[0]; // 왼쪽 상단
+                    Point bottomRight = matchPoints[1]; // 오른쪽 하단
+
+                    // 게임 화면 영역 계산
+                    int x = (int)topLeft.X;
+                    int y = (int)topLeft.Y;
+                    int width = (int)(bottomRight.X - topLeft.X);
+                    int height = (int)(bottomRight.Y - topLeft.Y);
+                    Rect gameWindowRect = new Rect(x, y, width, height);
+
+                    // 게임 화면 영역에 사각형 그리기
+                    Cv2.Rectangle(image, gameWindowRect, Scalar.Red, 2);
+                }
+
             }
 
 
-            // 매칭 결과를 이용하여 게임 화면 영역 검출
-            if (matchPoints.Count == 2) // 두 개의 꼭짓점을 모두 찾은 경우
+
+            catch (OpenCvSharp.OpenCVException ex)
             {
-                
-                // 꼭짓점 좌표를 찾습니다.
-                Point topLeft = matchPoints[0]; // 왼쪽 상단
-                Point bottomRight = matchPoints[1]; // 오른쪽 하단
+                Console.WriteLine($"OpenCV 예외 발생: {ex.Message}");
+                // ... (OpenCV 관련 예외 처리)
+            }
 
-                // 게임 화면 영역 계산
-                int x = (int)topLeft.X;
-                int y = (int)topLeft.Y;
-                int width = (int)(bottomRight.X - topLeft.X);
-                int height = (int)(bottomRight.Y - topLeft.Y);
-                Rect gameWindowRect = new Rect(x, y, width, height);
+            catch (FileNotFoundException ex)
+            {
+                Console.WriteLine($"파일을 찾을 수 없습니다: {ex.FileName}");
+                // ... (파일 관련 예외 처리)
+            }
 
-                // 게임 화면 영역에 사각형 그리기
-                Cv2.Rectangle(image, gameWindowRect, Scalar.Red, 2);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"예외 발생: {ex.Message}");
+                // 예외 처리: 로그 기록, 오류 메시지 표시, 프로그램 종료 등
             }
         }
 
