@@ -131,6 +131,7 @@ namespace OpenCvSharpProjects
                     Point minLoc, maxLoc;
                     Cv2.MinMaxLoc(result, out minVal, out maxVal, out minLoc, out maxLoc);
 
+                    Console.WriteLine($"템플릿 매칭 결과 - 최대값: {maxVal}, 위치: ({maxLoc.X}, {maxLoc.Y})"); // 템플릿 매칭 결과 출력
 
                     // 최댓값이 임계값보다 크면 객체를 찾은 것으로 판단
                     if (maxVal > 0.8) // 임계값은 적절히 조정합니다.
