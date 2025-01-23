@@ -22,6 +22,8 @@ namespace OpenCvSharpProjects.Models
         // public Rect GameWindowRect { get; set; } // 게임 화면 영역
         
         // 필요에 따라 게임 정보 추가
+
+
         
     }
 }
