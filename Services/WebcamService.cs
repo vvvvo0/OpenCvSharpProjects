@@ -1,6 +1,8 @@
 ﻿using OpenCvSharp;
 using System.Threading.Tasks;
 
+
+// 웹캠에서 이미지 프레임을 가져오는 역할
 namespace OpenCvSharpProjects.Services
 {
     class WebcamService
@@ -29,14 +31,14 @@ namespace OpenCvSharpProjects.Services
         public void StopCapture()
         {
             // 웹캠 캡처를 중지합니다.
-            capture.Release();
+            capture.Release(); 
         }
 
         public async Task<Mat> GetFrameAsync()
         {
             // 웹캠에서 프레임을 가져옵니다.
-            await Task.Run(() => capture.Read(frame));
-            return frame;
+            await Task.Run(() => capture.Read(frame)); // 웹캠에서 프레임을 읽어옵니다.
+            return frame; // 프레임을 반환합니다.
         }
     }
 }
