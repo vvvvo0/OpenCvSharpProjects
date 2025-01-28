@@ -29,8 +29,8 @@
 
         <Rectangle Stroke="Red" StrokeThickness="2" 
                    Visibility="{Binding GameWindowRect, Converter={StaticResource RectToVisibilityConverter}}" 
-                   Width="{Binding GameWindowRect.Width, Converter={StaticResource RectToVisibilityConverter}}" 
-                   Height="{Binding GameWindowRect.Height, Converter={StaticResource RectToVisibilityConverter}}" 
+                   Width="{Binding GameWindowRect, Converter={StaticResource RectToDoubleConverter}}" 
+                   Height="{Binding GameWindowRect, Converter={StaticResource RectToDoubleConverter}}" 
                    Margin="{Binding GameWindowRect, Converter={StaticResource RectToThicknessConverter}}" />
 
         <TextBlock Text="미니맵을 찾을 수 없습니다." Foreground="Red"

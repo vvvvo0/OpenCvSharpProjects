@@ -8,5 +8,6 @@
         <local:RectToThicknessConverter x:Key="RectToThicknessConverter" />
         <local:RectToVisibilityConverter x:Key="RectToVisibilityConverter" />
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <local:RectToDoubleConverter x:Key="RectToDoubleConverter" />
     </Application.Resources>
 </Application>

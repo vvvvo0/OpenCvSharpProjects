@@ -11,11 +11,11 @@ namespace OpenCvSharpProjects.Converters
         {
             if (value is bool boolean && boolean)
             {
-                return Visibility.Visible; // bool 값이 true이면 Visibility.Visible을 반환합니다.
+                return Visibility.Collapsed; // bool 값이 true이면 Visibility.Visible을 반환합니다.
             }
             else
             {
-                return Visibility.Collapsed; // bool 값이 false이면 Visibility.Collapsed를 반환합니다.
+                return Visibility.Visible; // bool 값이 false이면 Visibility.Collapsed를 반환합니다.
             }
         }
 

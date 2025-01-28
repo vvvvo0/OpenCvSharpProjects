@@ -105,11 +105,9 @@ namespace OpenCvSharpProjects.ViewModels
                     gameInfo = imageProcessingService.ProcessImage(frame.Clone()); // 이미지 처리 서비스를 사용하여 이미지를 처리하고 게임 정보를 업데이트한다.
                     GameWindowRect = gameInfo.GameWindowRect; // 게임 화면 영역을 업데이트한다.
 
-                    // Dispatcher.Invoke를 사용하여 UI 스레드에서 IsMinimapDetected 속성 값을 변경합니다.
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        IsMinimapDetected = gameInfo.IsMinimapDetected;// GameInfo 객체의 IsMinimapDetected 값을 바인딩한다.
-                    });
+                    
+                    IsMinimapDetected = gameInfo.IsMinimapDetected;// GameInfo 객체의 IsMinimapDetected 값을 바인딩한다.
+                   
 
                 
                 });
