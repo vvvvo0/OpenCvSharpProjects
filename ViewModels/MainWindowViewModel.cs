@@ -44,11 +44,18 @@ namespace OpenCvSharpProjects.ViewModels
         private OpenCvSharp.Rect gameWindowRect; // 게임 화면 영역을 표시하기 위한 속성이다.
                                                  // // OpenCvSharp.Rect 명시
 
+        [ObservableProperty]
+        private bool isMinimapDetected; // 미니맵이 검출되었는지 여부를 표시하기 위한 속성이다.
+                                        
+
+
         // View에서 실행할 Command들이다.
         public ICommand StartCaptureCommand { get; private set; } // 웹캠 캡처를 시작하는 Command이다.
         public ICommand StopCaptureCommand { get; private set; } // 웹캠 캡처를 중지하는 Command이다.
         public ICommand StartGameCommand { get; private set; } // 게임을 시작하는 Command이다.
         public ICommand StopGameCommand { get; private set; } // 게임을 중지하는 Command이다.
+
+
 
         // 웹캠 캡처 시작 메서드이다.
         private async void StartCapture()
@@ -57,6 +64,8 @@ namespace OpenCvSharpProjects.ViewModels
             CompositionTarget.Rendering += UpdateFrame; // CompositionTarget.Rendering 이벤트에 UpdateFrame 메서드를 등록하여 프레임 업데이트를 시작한다.
         }
 
+
+
         // 웹캠 캡처 중지 메서드이다.
         private void StopCapture()
         {
@@ -64,17 +73,23 @@ namespace OpenCvSharpProjects.ViewModels
             CompositionTarget.Rendering -= UpdateFrame; // CompositionTarget.Rendering 이벤트에서 UpdateFrame 메서드를 제거하여 프레임 업데이트를 중지한다.
         }
 
+
+
         // 게임 시작 메서드이다.
         private void StartGame()
         {
             // TODO: 게임 시작 로직 구현
         }
 
+
+
         // 게임 중지 메서드이다.
         private void StopGame()
         {
             // TODO: 게임 중지 로직 구현
         }
+
+
 
         // 프레임 업데이트 메서드이다.
         private async void UpdateFrame(object? sender, EventArgs e)
@@ -89,6 +104,14 @@ namespace OpenCvSharpProjects.ViewModels
                 {
                     gameInfo = imageProcessingService.ProcessImage(frame.Clone()); // 이미지 처리 서비스를 사용하여 이미지를 처리하고 게임 정보를 업데이트한다.
                     GameWindowRect = gameInfo.GameWindowRect; // 게임 화면 영역을 업데이트한다.
+
+                    // Dispatcher.Invoke를 사용하여 UI 스레드에서 IsMinimapDetected 속성 값을 변경합니다.
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        IsMinimapDetected = gameInfo.IsMinimapDetected;// GameInfo 객체의 IsMinimapDetected 값을 바인딩한다.
+                    });
+
+                
                 });
             }
         }

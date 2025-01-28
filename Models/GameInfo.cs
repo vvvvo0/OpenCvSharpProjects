@@ -28,6 +28,8 @@ namespace OpenCvSharpProjects.Models
         public Mat? Descriptors { get; set; } // 특징점 기술자
 
 
+        public bool IsMinimapDetected { get; set; } // 미니맵 인식 여부
+
         // TODO: 필요에 따라 몬스터, NPC, 아이템 등의 정보를 추가할 수 있다.
     }
 }

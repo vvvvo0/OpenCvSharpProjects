@@ -32,7 +32,20 @@ namespace OpenCvSharpProjects.Services
                 // 2. 객체 인식 (플레이어 및 몬스터)
                 // TODO: 객체 인식 모델을 사용하여 플레이어와 몬스터를 인식하고 위치 정보를 gameInfo에 저장합니다.
 
+
+
+                // 미니맵 영역 검출
+                if (gameInfo.GameWindowRect.Width > 0 && gameInfo.GameWindowRect.Height > 0) // 미니맵 영역이 검출되었다면
+                {
+                    gameInfo.IsMinimapDetected = true;
+                }
+                else
+                {
+                    gameInfo.IsMinimapDetected = false;
+                }
             }
+
+
             catch (OpenCvSharp.OpenCVException ex)
             {
                 Console.WriteLine($"OpenCV 예외 발생: {ex.Message}");
@@ -42,7 +55,7 @@ namespace OpenCvSharpProjects.Services
                 Console.WriteLine($"예외 발생: {ex.Message}");
             }
 
-            return gameInfo;
+            return gameInfo; // gameInfo 객체 반환
         }
 
         private Rect DetectGameWindow(Mat image)
