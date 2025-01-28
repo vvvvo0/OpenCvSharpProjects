@@ -19,10 +19,12 @@ namespace OpenCvSharpProjects.Services
         public GameInfo ProcessImage(Mat image)
         {
             var gameInfo = new GameInfo();
+
             try
             {
                 // 웹캠 이미지 크기 조정
                 Cv2.Resize(image, image, new OpenCvSharp.Size(image.Width / 2, image.Height / 2)); // 이미지 크기를 절반으로 줄입니다.
+                                                                                                   // ProcessImage() 메서드 안에서 웹캠 이미지 크기를 조정하는 코드를 추가했다.
 
                 // 1. 특징점 매칭을 이용한 게임 화면 영역 검출
                 gameInfo.GameWindowRect = DetectGameWindow(image);
