@@ -66,127 +66,123 @@ namespace OpenCvSharpProjects.Services
         private Rect DetectGameWindow(Mat image)
         {
             // 템플릿 이미지 파일 경로
-            string templatePath = "Resources/minimap_template.png"; // 템플릿 이미지 파일 경로
+            string[] templatePaths = {"Resources/minimap_template.png", "Resources/minimap_template_2.png"}; // 템플릿 이미지 파일 경로
+                                                                                                            // 추가적인 템플릿 이미지 경로를 {}안에 넣습니다.
+
 
             // 각 템플릿 이미지에 대한 매칭 결과를 저장할 리스트
             var matchPoints = new List<Point2f>(); // foreach 루프 밖에서 리스트 생성
 
-            // 템플릿 이미지 로드
-            var template = Cv2.ImRead(templatePath, ImreadModes.Grayscale);
-
-
-            // 미니맵 템플릿 매칭
-            Mat result = new Mat();
-
-            // image를 그레이스케일로 변환합니다.
-            Mat grayImage = new Mat();
-            Cv2.CvtColor(image, grayImage, ColorConversionCodes.BGR2GRAY); // grayImage를 사용합니다.
-
-
-
-            Cv2.MatchTemplate(grayImage, template, result, TemplateMatchModes.CCoeffNormed);
-            double minVal, maxVal;
-            Point minLoc, maxLoc;
-            Cv2.MinMaxLoc(result, out minVal, out maxVal, out minLoc, out maxLoc);
-
-            if (maxVal > 0.8) // 템플릿 매칭 성공
+            // 각 템플릿 이미지에 대해 특징점 매칭 수행
+            foreach (var templatePath in templatePaths)
             {
-                // 미니맵 영역 추출
-                OpenCvSharp.Rect minimapRect = new OpenCvSharp.Rect(maxLoc.X, maxLoc.Y, template.Width, template.Height);
-                Mat minimapImage = new Mat(image, minimapRect);
+                // 템플릿 이미지 로드
+                var template = Cv2.ImRead(templatePath, ImreadModes.Grayscale);
 
-                // 특징점 검출 및 기술 (minimapImage 사용)
-                KeyPoint[] keypoints1, keypoints2;
-                Mat descriptors1 = new Mat(), descriptors2 = new Mat();
-                orb.DetectAndCompute(minimapImage, null, out keypoints1, descriptors1);
-                orb.DetectAndCompute(template, null, out keypoints2, descriptors2);
+                // 미니맵 템플릿 매칭
+                Mat result = new Mat();
+                // image를 그레이스케일로 변환합니다.
+                Mat grayImage = new Mat();
+                Cv2.CvtColor(image, grayImage, ColorConversionCodes.BGR2GRAY);
+                Cv2.MatchTemplate(grayImage, template, result, TemplateMatchModes.CCoeffNormed);
+                double minVal, maxVal;
+                Point minLoc, maxLoc;
+                Cv2.MinMaxLoc(result, out minVal, out maxVal, out minLoc, out maxLoc);
 
-                // BFMatcher 생성
-                var matcher = new BFMatcher(NormTypes.Hamming, true);
-
-                // 특징점 매칭
-                var matches = matcher.Match(descriptors1, descriptors2);
-
-                // 좋은 매칭 결과만 선택
-                var goodMatches = new List<DMatch>();
-                double minDist = double.MaxValue;
-                double maxDist = double.MinValue;
-                for (int i = 0; i < descriptors1.Rows; i++)
+                if (maxVal > 0.6) // 템플릿 매칭 성공
                 {
-                    double dist = matches[i].Distance;
-                    if (dist < minDist) minDist = dist;
-                    if (dist > maxDist) maxDist = dist;
-                }
-                double goodMatchDist = 2 * minDist;
-                if (goodMatchDist > maxDist)
-                {
-                    goodMatchDist = 0.7 * maxDist;
-                }
-                for (int i = 0; i < descriptors1.Rows; i++)
-                {
-                    if (matches[i].Distance < goodMatchDist)
+                    // 미니맵 영역 추출
+                    OpenCvSharp.Rect minimapRect = new OpenCvSharp.Rect(maxLoc.X, maxLoc.Y, template.Width, template.Height);
+                    Mat minimapImage = new Mat(image, minimapRect);
+
+                    // 특징점 검출 및 기술 (minimapImage 사용)
+                    KeyPoint[] keypoints1, keypoints2;
+                    Mat descriptors1 = new Mat(), descriptors2 = new Mat();
+                    orb.DetectAndCompute(minimapImage, null, out keypoints1, descriptors1);
+                    orb.DetectAndCompute(template, null, out keypoints2, descriptors2);
+
+                    // BFMatcher 생성
+                    var matcher = new BFMatcher(NormTypes.Hamming, true);
+
+                    // 특징점 매칭
+                    var matches = matcher.Match(descriptors1, descriptors2);
+
+                    // 좋은 매칭 결과만 선택
+                    var goodMatches = new List<DMatch>();
+                    double minDist = double.MaxValue;
+                    double maxDist = double.MinValue;
+                    for (int i = 0; i < descriptors1.Rows; i++)
                     {
-                        goodMatches.Add(matches[i]);
+                        double dist = matches[i].Distance;
+                        if (dist < minDist) minDist = dist;
+                        if (dist > maxDist) maxDist = dist;
                     }
-                }
-
-                // 매칭 결과를 이용하여 템플릿 위치 계산
-                if (goodMatches.Count >= 4) // 최소 4개의 매칭점 필요
-                {
-                    var pts1 = goodMatches.Select(m => keypoints1[m.QueryIdx].Pt).ToArray();
-                    var pts2 = goodMatches.Select(m => keypoints2[m.TrainIdx].Pt).ToArray();
-
-                    // 호모그래피 행렬 계산
-                    var homography = Cv2.FindHomography(InputArray.Create(pts2), InputArray.Create(pts1), HomographyMethods.Ransac);
-
-                    // 템플릿 이미지의 네 꼭짓점 좌표
-                    var templateCorners = new Point2f[]
+                    double goodMatchDist = 2 * minDist;
+                    if (goodMatchDist > maxDist)
                     {
-                        new Point2f(0, 0),
-                        new Point2f(template.Width, 0),
-                        new Point2f(template.Width, template.Height),
-                        new Point2f(0, template.Height)
-                    };
+                        goodMatchDist = 0.7 * maxDist;
+                    }
+                    for (int i = 0; i < descriptors1.Rows; i++)
+                    {
+                        if (matches[i].Distance < goodMatchDist)
+                        {
+                            goodMatches.Add(matches[i]);
+                        }
+                    }
 
-                    // 호모그래피 행렬을 이용하여 웹캠 이미지에서 템플릿 이미지의 꼭짓점 좌표 계산
-                    var imageCorners = Cv2.PerspectiveTransform(templateCorners, homography);
+                    // 매칭 결과를 이용하여 템플릿 위치 계산
+                    if (goodMatches.Count >= 4) // 최소 4개의 매칭점 필요
+                    {
+                        var pts1 = goodMatches.Select(m => keypoints1[m.QueryIdx].Pt).ToArray();
+                        var pts2 = goodMatches.Select(m => keypoints2[m.TrainIdx].Pt).ToArray();
 
-                    matchPoints.AddRange(imageCorners);
-                }
+                        // 호모그래피 행렬 계산
+                        var homography = Cv2.FindHomography(InputArray.Create(pts2), InputArray.Create(pts1), HomographyMethods.Ransac);
 
-                // 꼭짓점 좌표를 이용하여 게임 화면 영역 계산
-                if (matchPoints.Count == 4)
-                {
-                    var topLeft = new OpenCvSharp.Point((int)matchPoints[0].X, (int)matchPoints[0].Y);
-                    var bottomRight = new OpenCvSharp.Point((int)matchPoints[2].X, (int)matchPoints[2].Y);
+                        // 템플릿 이미지의 네 꼭짓점 좌표
+                        var templateCorners = new Point2f[]
+                        {
+                            new Point2f(0, 0),
+                            new Point2f(template.Width, 0),
+                            new Point2f(template.Width, template.Height),
+                            new Point2f(0, template.Height)
+                        };
 
-                    // Rect 객체 생성
-                    int width = bottomRight.X - topLeft.X; // 너비 계산
-                    int height = bottomRight.Y - topLeft.Y; // 높이 계산
+                        // 호모그래피 행렬을 이용하여 웹캠 이미지에서 템플릿 이미지의 꼭짓점 좌표 계산
+                        var imageCorners = Cv2.PerspectiveTransform(templateCorners, homography);
 
-                    logger.Debug("미니맵 영역 검출 성공"); // 로그 출력
+                        matchPoints.AddRange(imageCorners);
 
-                    return new OpenCvSharp.Rect(topLeft.X, topLeft.Y, width, height); // 왼쪽 상단 좌표, 너비, 높이를 사용하여 Rect 객체 생성
+                        // 꼭짓점 좌표를 이용하여 게임 화면 영역 계산
+                        if (matchPoints.Count == 4)
+                        {
+                            var topLeft = new OpenCvSharp.Point((int)matchPoints[0].X, (int)matchPoints[0].Y);
+                            var bottomRight = new OpenCvSharp.Point((int)matchPoints[2].X, (int)matchPoints[2].Y);
+
+                            // Rect 객체 생성
+                            int width = bottomRight.X - topLeft.X; // 너비 계산
+                            int height = bottomRight.Y - topLeft.Y; // 높이 계산
+
+                            logger.Debug("미니맵 영역 검출 성공"); // 로그 출력
+
+                            return new OpenCvSharp.Rect(topLeft.X, topLeft.Y, width, height); // 왼쪽 상단 좌표, 너비, 높이를 사용하여 Rect 객체 생성
+                        }
+                    }
                 }
                 else
                 {
-                    logger.Debug("미니맵 영역 검출 실패"); // 로그 출력
-
-                    return new OpenCvSharp.Rect(); // 빈 Rect 객체 반환
+                    logger.Debug("미니맵 템플릿 매칭 실패"); // 로그 출력
+                    // return new OpenCvSharp.Rect(); // 빈 Rect 객체 반환 - 여기서는 반환하지 않고 다음 템플릿으로 넘어갑니다.
                 }
             }
 
-
-            else
-            {
-                logger.Debug("미니맵 템플릿 매칭 실패"); // 로그 출력
-                return new OpenCvSharp.Rect(); // 빈 Rect 객체 반환
-            }
-
-
+            // 모든 템플릿 매칭에 실패한 경우
+            logger.Debug("미니맵 영역 검출 실패"); // 로그 출력
+            return new OpenCvSharp.Rect(); // 빈 Rect 객체 반환
         }
     }
 }
+
 
 
 
