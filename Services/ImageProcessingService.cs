@@ -34,7 +34,7 @@ namespace OpenCvSharpProjects.Services
                 Cv2.Resize(testImage, testImage, new OpenCvSharp.Size(testImage.Width / 2, testImage.Height / 2));
 
                 // 밝기/대비 조절 (예: 밝기 1.2배, 대비 1.5배)
-                Cv2.AddWeighted(testImage, 1.2, new Mat(), 0, 1.5, testImage);
+                Cv2.AddWeighted(testImage, 1.2, new Mat(testImage.Size(), testImage.Type()), 0, 1.5, testImage); // 빈 이미지의 크기와 타입을 testImage와 동일하게 설정
 
 
                 // 1. 특징점 매칭을 이용한 게임 화면 영역 검출
