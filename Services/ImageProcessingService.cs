@@ -4,23 +4,7 @@ using OpenCvSharpProjects.Models;
 using System;
 using System.Collections.Generic;
 using NLog;
-
-
-
-/*
-게임 화면 영역 검출 후, 미니맵 검출 여부를 설정하는 코드가 추가되었습니다. 
-`gameInfo.GameWindowRect`의 너비와 높이가 0보다 큰지 확인하여 `gameInfo.IsMinimapDetected`를 설정합니다.
-
-
-특징점 매칭 결과에서 좋은 매칭 결과만 선택하는 코드가 추가되었습니다.
-매칭 결과를 거리 기준으로 정렬하고 상위 1/4만 선택하여 `goodMatches` 리스트에 저장합니다.
-
-
-기존의 좋은 매칭 결과 선택 코드가 주석 처리되었습니다.
-매칭 결과를 이용하여 템플릿 위치를 계산하는 코드가 추가되었습니다. 최소 4개의 매칭점이 필요합니다.
-
- */
-
+using System.Windows;
 
 namespace OpenCvSharpProjects.Services
 {
@@ -88,7 +72,7 @@ namespace OpenCvSharpProjects.Services
 
 
 
-        private Rect DetectGameWindow(Mat image)
+        private OpenCvSharp.Rect DetectGameWindow(Mat image)
         {
             // 템플릿 이미지 파일 경로
             string[] templatePaths = { "Resources/minimap_template.png", "Resources/minimap_template_2.png" }; // 템플릿 이미지 파일 경로
@@ -115,45 +99,54 @@ namespace OpenCvSharpProjects.Services
                 // 특징점 매칭
                 var matches = matcher.Match(descriptors1, descriptors2);
 
+               
+                /*
+                // 좋은 매칭 결과만 선택 (거리 비율 테스트)
+                var goodMatches = new List<DMatch>();
+                double ratioThreshold = 0.75; // 임계값 설정
+                foreach (var match in matches)
+                {
+                    // match.TrainIdx가 범위를 벗어나지 않는지 확인
+                    if (match.TrainIdx < matches.Length && match.Distance < ratioThreshold * matches[match.TrainIdx].Distance)
+                    {
+                        goodMatches.Add(match);
+                    }
+                }
+                */
 
+
+                
                 // 좋은 매칭 결과만 선택
                 var goodMatches = matches
                     .OrderBy(x => x.Distance)
                     .Take(matches.Length / 4)
                     .ToList();
 
-                /*
-
-                // 좋은 매칭 결과만 선택
-                var goodMatches = new List<DMatch>();
-                double minDist = double.MaxValue;
-                double maxDist = double.MinValue;
 
 
-                // matches 배열의 크기만큼 반복
-                for (int i = 0; i < matches.Length; i++)
+
+                // 특징점 매칭 결과 확인 (goodMatches 사용)
+                Mat outImg = new Mat();
+                Cv2.DrawMatches(image, keypoints1, template, keypoints2, goodMatches, outImg);
+
+
+
+                // 결과 이미지 크기 조정 (예: 가로 세로 각각 절반 크기로 조정)
+                Cv2.Resize(outImg, outImg, new OpenCvSharp.Size(outImg.Width / 2, outImg.Height / 2));
+
+
+                // Dispatcher.Invoke를 사용하여 UI 스레드에서 Cv2.ImShow() 함수를 호출합니다.
+                Application.Current.Dispatcher.Invoke(() =>
                 {
-                    double dist = matches[i].Distance;
-                    if (dist < minDist) minDist = dist;
-                    if (dist > maxDist) maxDist = dist;
-                }
-                double goodMatchDist = 2 * minDist;
-                if (goodMatchDist > maxDist)
-                {
-                    goodMatchDist = 0.7 * maxDist;
-                }
+                    Cv2.ImShow("특징점 매칭 결과", outImg);
+
+                    // 창 크기 조절 (예: 800x600 크기로 조절)
+                    // Cv2.ResizeWindow("특징점 매칭 결과", 800, 600);
+
+                    Cv2.WaitKey();
+                });
 
 
-                // matches 배열의 크기만큼 반복
-                for (int i = 0; i < matches.Length; i++) // matches.Length 사용
-                {
-                    if (matches[i].Distance < goodMatchDist)
-                    {
-                        goodMatches.Add(matches[i]);
-                    }
-                }
-
-                */
 
 
                 // 매칭 결과를 이용하여 템플릿 위치 계산
@@ -164,7 +157,8 @@ namespace OpenCvSharpProjects.Services
                     var pts2 = goodMatches.Select(m => keypoints2[m.TrainIdx].Pt).ToArray();
 
                     // 호모그래피 행렬 계산
-                    var homography = Cv2.FindHomography(InputArray.Create(pts2), InputArray.Create(pts1), HomographyMethods.Ransac);
+                    var homography = Cv2.FindHomography(InputArray.Create(pts2), InputArray.Create(pts1), HomographyMethods.Ransac, 5); // 5는 RANSAC 반복 횟수
+
 
                     // 템플릿 이미지의 네 꼭짓점 좌표
                     var templateCorners = new Point2f[]
@@ -225,7 +219,38 @@ namespace OpenCvSharpProjects.Services
 }
 
 
+/*
 
+// 좋은 매칭 결과만 선택
+var goodMatches = new List<DMatch>();
+double minDist = double.MaxValue;
+double maxDist = double.MinValue;
+
+
+// matches 배열의 크기만큼 반복
+for (int i = 0; i < matches.Length; i++)
+{
+    double dist = matches[i].Distance;
+    if (dist < minDist) minDist = dist;
+    if (dist > maxDist) maxDist = dist;
+}
+double goodMatchDist = 2 * minDist;
+if (goodMatchDist > maxDist)
+{
+    goodMatchDist = 0.7 * maxDist;
+}
+
+
+// matches 배열의 크기만큼 반복
+for (int i = 0; i < matches.Length; i++) // matches.Length 사용
+{
+    if (matches[i].Distance < goodMatchDist)
+    {
+        goodMatches.Add(matches[i]);
+    }
+}
+
+*/
 
 
 /*
