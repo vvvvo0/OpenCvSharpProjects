@@ -5,6 +5,23 @@ using System;
 using System.Collections.Generic;
 using NLog;
 
+
+
+/*
+게임 화면 영역 검출 후, 미니맵 검출 여부를 설정하는 코드가 추가되었습니다. 
+`gameInfo.GameWindowRect`의 너비와 높이가 0보다 큰지 확인하여 `gameInfo.IsMinimapDetected`를 설정합니다.
+
+
+특징점 매칭 결과에서 좋은 매칭 결과만 선택하는 코드가 추가되었습니다.
+매칭 결과를 거리 기준으로 정렬하고 상위 1/4만 선택하여 `goodMatches` 리스트에 저장합니다.
+
+
+기존의 좋은 매칭 결과 선택 코드가 주석 처리되었습니다.
+매칭 결과를 이용하여 템플릿 위치를 계산하는 코드가 추가되었습니다. 최소 4개의 매칭점이 필요합니다.
+
+ */
+
+
 namespace OpenCvSharpProjects.Services
 {
     public class ImageProcessingService
@@ -42,6 +59,9 @@ namespace OpenCvSharpProjects.Services
 
                 // 1. 특징점 매칭을 이용한 게임 화면 영역 검출
                 gameInfo.GameWindowRect = DetectGameWindow(testImage); // 테스트 이미지 사용(testImage 전달)
+
+                // 미니맵 검출 여부 설정
+                gameInfo.IsMinimapDetected = gameInfo.GameWindowRect.Width > 0 && gameInfo.GameWindowRect.Height > 0;
 
                 // 2. 객체 인식 (플레이어 및 몬스터)
                 // TODO: 객체 인식 모델을 사용하여 플레이어와 몬스터를 인식하고 위치 정보를 gameInfo에 저장합니다.
@@ -95,6 +115,15 @@ namespace OpenCvSharpProjects.Services
                 // 특징점 매칭
                 var matches = matcher.Match(descriptors1, descriptors2);
 
+
+                // 좋은 매칭 결과만 선택
+                var goodMatches = matches
+                    .OrderBy(x => x.Distance)
+                    .Take(matches.Length / 4)
+                    .ToList();
+
+                /*
+
                 // 좋은 매칭 결과만 선택
                 var goodMatches = new List<DMatch>();
                 double minDist = double.MaxValue;
@@ -124,6 +153,7 @@ namespace OpenCvSharpProjects.Services
                     }
                 }
 
+                */
 
 
                 // 매칭 결과를 이용하여 템플릿 위치 계산
