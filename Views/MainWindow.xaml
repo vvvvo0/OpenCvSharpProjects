@@ -13,20 +13,8 @@
 
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
 
-        <Image x:Name="CameraImage" Grid.Row="0" Source="{Binding CameraImage}" Stretch="Uniform" />
-
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10">
-            <Button Content="캡처 시작" Command="{Binding StartCaptureCommand}" Margin="5" />
-            <Button Content="캡처 중지" Command="{Binding StopCaptureCommand}" Margin="5" />
-            <Button Content="게임 시작" Command="{Binding StartGameCommand}" Margin="5" />
-            <Button Content="게임 중지" Command="{Binding StopGameCommand}" Margin="5" />
-        </StackPanel>
-
+        
         <Rectangle Stroke="Red" StrokeThickness="2" 
                    Visibility="{Binding GameWindowRect, Converter={StaticResource RectToVisibilityConverter}}" 
                    Width="{Binding GameWindowRect, Converter={StaticResource RectToDoubleConverter}}" 

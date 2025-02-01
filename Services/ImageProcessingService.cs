@@ -22,12 +22,37 @@ namespace OpenCvSharpProjects.Services
 
             try
             {
-                // 웹캠 이미지 크기 조정
-                Cv2.Resize(image, image, new OpenCvSharp.Size(image.Width / 2, image.Height / 2)); // 이미지 크기를 절반으로 줄입니다.
-                                                                                                   // ProcessImage() 메서드 안에서 웹캠 이미지 크기를 조정하는 코드를 추가했다.
+
+                // 테스트 이미지 로드
+                Mat testImage = Cv2.ImRead("Resources/minimap_template.png", ImreadModes.Color); // 리소스 폴더의 미니맵 템플릿 이미지 사용
+
+
+                // 웹캠 이미지 크기 조정 (예: 절반으로 줄이기)
+                Cv2.Resize(testImage, testImage, new OpenCvSharp.Size(testImage.Width / 2, testImage.Height / 2));
+
+                // 밝기/대비 조절 (예: 밝기 1.2배, 대비 1.5배)
+                Cv2.AddWeighted(testImage, 1.2, new Mat(), 0, 1.5, testImage);
+
 
                 // 1. 특징점 매칭을 이용한 게임 화면 영역 검출
-                gameInfo.GameWindowRect = DetectGameWindow(image);
+                gameInfo.GameWindowRect = DetectGameWindow(testImage); // 테스트 이미지 사용
+
+                // 2. 객체 인식 (플레이어 및 몬스터)
+                // TODO: 객체 인식 모델을 사용하여 플레이어와 몬스터를 인식하고 위치 정보를 gameInfo에 저장합니다.
+
+
+
+
+
+                // 웹캠 이미지 크기 조정
+                // Cv2.Resize(image, image, new OpenCvSharp.Size(image.Width / 2, image.Height / 2)); // 이미지 크기를 절반으로 줄입니다.
+                // ProcessImage() 메서드 안에서 웹캠 이미지 크기를 조정하는 코드를 추가했다.
+
+                // 밝기/대비 조절 (예: 밝기 1.2배, 대비 1.5배)
+                // Cv2.AddWeighted(image, 1.2, new Mat(), 0, 1.5, image);
+
+                // 1. 특징점 매칭을 이용한 게임 화면 영역 검출
+                // gameInfo.GameWindowRect = DetectGameWindow(image);
 
                 // 2. 객체 인식 (플레이어 및 몬스터)
                 // TODO: 객체 인식 모델을 사용하여 플레이어와 몬스터를 인식하고 위치 정보를 gameInfo에 저장합니다.
@@ -35,14 +60,14 @@ namespace OpenCvSharpProjects.Services
 
 
                 // 미니맵 영역 검출
-                if (gameInfo.GameWindowRect.Width > 0 && gameInfo.GameWindowRect.Height > 0) // 미니맵 영역이 검출되었다면
-                {
-                    gameInfo.IsMinimapDetected = true;
-                }
-                else
-                {
-                    gameInfo.IsMinimapDetected = false;
-                }
+                // if (gameInfo.GameWindowRect.Width > 0 && gameInfo.GameWindowRect.Height > 0) // 미니맵 영역이 검출되었다면
+                // {
+                //    gameInfo.IsMinimapDetected = true;
+                // }
+                // else
+                // {
+                //    gameInfo.IsMinimapDetected = false;
+                // }
             }
 
 
