@@ -17,7 +17,9 @@ namespace OpenCvSharpProjects.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject
     {
-        private readonly WebcamService webcamService; // 웹캠 서비스를 사용하기 위한 변수이다.
+        // private readonly WebcamService webcamService; // 웹캠 서비스를 사용하기 위한 변수이다.
+
+
         private readonly ImageProcessingService imageProcessingService; // 이미지 처리 서비스를 사용하기 위한 변수이다.
         private readonly KeyboardControlService keyboardControlService; // 키보드 제어 서비스를 사용하기 위한 변수이다.
         private GameInfo gameInfo; // 게임 정보를 저장하는 변수이다.
@@ -35,10 +37,30 @@ namespace OpenCvSharpProjects.ViewModels
 
 
             // RelayCommand를 사용하여 Command를 초기화한다.
-            StartCaptureCommand = new RelayCommand(StartCapture);
-            StopCaptureCommand = new RelayCommand(StopCapture);
+            // StartCaptureCommand = new RelayCommand(StartCapture);
+            // StopCaptureCommand = new RelayCommand(StopCapture);
             StartGameCommand = new RelayCommand(StartGame);
             StopGameCommand = new RelayCommand(StopGame);
+
+
+
+
+
+            // 테스트 이미지를 사용하여 이미지 처리를 수행합니다.
+            Mat frame = Cv2.ImRead("Resources/minimap_template.png", ImreadModes.Color); // 테스트 이미지 로드
+
+            if (!frame.Empty())
+            {
+                // 이미지 처리 및 게임 정보 업데이트
+                Task.Run(() =>
+                {
+                    gameInfo = imageProcessingService.ProcessImage(frame.Clone());
+                    GameWindowRect = gameInfo.GameWindowRect;
+                    IsMinimapDetected = gameInfo.IsMinimapDetected;
+                });
+            }
+
+
         }
 
         // View에 바인딩할 속성들이다.
@@ -55,32 +77,32 @@ namespace OpenCvSharpProjects.ViewModels
 
 
         // View에서 실행할 Command들이다.
-        public ICommand StartCaptureCommand { get; private set; } // 웹캠 캡처를 시작하는 Command이다.
-        public ICommand StopCaptureCommand { get; private set; } // 웹캠 캡처를 중지하는 Command이다.
+        // public ICommand StartCaptureCommand { get; private set; } // 웹캠 캡처를 시작하는 Command이다.
+        // public ICommand StopCaptureCommand { get; private set; } // 웹캠 캡처를 중지하는 Command이다.
         public ICommand StartGameCommand { get; private set; } // 게임을 시작하는 Command이다.
         public ICommand StopGameCommand { get; private set; } // 게임을 중지하는 Command이다.
 
 
 
         // 웹캠 캡처 시작 메서드이다.
-        private async void StartCapture()
-        {
+        // private async void StartCapture()
+        // {
            
 
             // await webcamService.StartCaptureAsync(); // 웹캠 캡처를 시작한다.
             // CompositionTarget.Rendering += UpdateFrame; // CompositionTarget.Rendering 이벤트에 UpdateFrame 메서드를 등록하여 프레임 업데이트를 시작한다.
 
 
-        }
+        // }
 
 
 
         // 웹캠 캡처 중지 메서드이다.
-        private void StopCapture()
-        {
+        // private void StopCapture()
+        // {
             // webcamService.StopCapture(); // 웹캠 캡처를 중지한다.
             // CompositionTarget.Rendering -= UpdateFrame; // CompositionTarget.Rendering 이벤트에서 UpdateFrame 메서드를 제거하여 프레임 업데이트를 중지한다.
-        }
+        // }
 
 
 
@@ -100,27 +122,29 @@ namespace OpenCvSharpProjects.ViewModels
 
 
 
+
+
+
+        /*
         // 프레임 업데이트 메서드이다.
         private async void UpdateFrame(object? sender, EventArgs e)
         {
-            // Mat frame = await webcamService.GetFrameAsync(); // 웹캠에서 프레임을 가져온다.
 
-            // if (!frame.Empty()) // 프레임이 비어있지 않으면
-            // {
-                // CameraImage = frame.ToWriteableBitmap(); // 프레임을 WriteableBitmap으로 변환하여 CameraImage 속성에 설정한다.
 
-                // await Task.Run(() =>
-                // {
-                    // gameInfo = imageProcessingService.ProcessImage(frame.Clone()); // 이미지 처리 서비스를 사용하여 이미지를 처리하고 게임 정보를 업데이트한다.
-                    // GameWindowRect = gameInfo.GameWindowRect; // 게임 화면 영역을 업데이트한다.
-            
-                    
-                    // IsMinimapDetected = gameInfo.IsMinimapDetected;// GameInfo 객체의 IsMinimapDetected 값을 바인딩한다.
-                   
+            // 테스트 이미지를 사용하여 이미지 처리를 수행합니다.
+            Mat frame = Cv2.ImRead("Resources/minimap_template.png", ImreadModes.Color); // 테스트 이미지 로드
 
-                
-                // });
-            // }
+            if (!frame.Empty())
+            {
+                // 이미지 처리 및 게임 정보 업데이트
+                await Task.Run(() =>
+                {
+                    gameInfo = imageProcessingService.ProcessImage(frame.Clone());
+                    GameWindowRect = gameInfo.GameWindowRect;
+                    IsMinimapDetected = gameInfo.IsMinimapDetected;
+                });
+            }
         }
+        */
     }
 }
